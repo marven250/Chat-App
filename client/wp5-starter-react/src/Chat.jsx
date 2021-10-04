@@ -1,6 +1,14 @@
 import React from 'react';
-import {ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql} from '@apollo/client';
-import {Container} from 'shards-react'
+import {ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql, useMutation} from '@apollo/client';
+import {WebSocketLink} from '@apollo/client/Link/ws';
+import {Col, Container, FormInput, Row, Button} from 'shards-react';
+
+const wsLink = new WebSocketLink({
+  uri: 'ws://localhost:4000/',
+  options: {
+    reconnect: true
+  }
+});
 
 const client = new ApolloClient({
     uri: 'http://localhost:4000/',
@@ -15,6 +23,11 @@ const client = new ApolloClient({
      user
    }
    }`;
+
+  const POST_MESSAGE = gql`
+  mutation ($user:String!, $content:String!) {
+    postMessage(user: $user, content: $content)
+  }`
 
    const Messages = ({user}) =>{
      
@@ -66,9 +79,48 @@ const client = new ApolloClient({
    }
 
   const Chat = ()=>{
-    return (
+    const [state, setState] = React.useState({
+      user: "Marven",
+      content: "",
+    });
 
-      <Container><Messages user="Marve" /></Container>
+    const [postMessage] = useMutation(POST_MESSAGE, );
+
+    const onSend = () =>{
+      if(state.content.length>0){
+        postMessage({
+          variables: state,
+        })
+        }
+        setState({
+          ...state, content: ''
+      })
+    }
+
+    return (
+      <Container><Messages user={state.user} />
+        <Row>
+          <Col xs ={2} style = {{padding:0}}>
+            <FormInput
+            label="User"
+            value = {state.user}
+            onChange = {(event)=>{
+              setState({...state, user: event.target.value,})
+            }}
+            />
+          </Col>
+          <Col xs = {8}>
+            <FormInput
+            label = "Content"
+            value = {state.content}
+            onChange={(evt)=>setState({...state, content: evt.target.value})}
+            />
+          </Col>
+          <Col xs={2} style={{padding: 0}}>
+          <Button onClick={()=> onSend()}>Send</Button>
+          </Col>
+        </Row>
+      </Container>
     );
   };
 
